@@ -1,0 +1,29 @@
+[
+  {
+    "timestamp": "22-04-2026 18:30",
+    "subject": "Computer Engineering",
+    "students": 15,
+    "mean": 74.73,
+    "std": 13.72,
+    "topper": "Rohit Verma",
+    "top_marks": 95.0
+  },
+  {
+    "timestamp": "22-04-2026 18:40",
+    "subject": "Computer Engineering",
+    "students": 15,
+    "mean": 74.73,
+    "std": 13.72,
+    "topper": "Rohit Verma",
+    "top_marks": 95.0
+  },
+  {
+    "timestamp": "22-04-2026 18:43",
+    "subject": "Calculus",
+    "students": 2,
+    "mean": 94.0,
+    "std": 5.0,
+    "topper": "Prithviraj ",
+    "top_marks": 99.0
+  }
+]
