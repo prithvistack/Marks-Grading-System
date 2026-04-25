@@ -1,0 +1,92 @@
+[
+  {
+    "timestamp": "2026-04-24T22:28:24.577162",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 74.73,
+    "std": 13.72,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-24T22:30:16.171322",
+    "subject": "Calculus ",
+    "n_students": 2,
+    "mean": 98.5,
+    "std": 0.5,
+    "topper_name": "Arnav",
+    "topper_marks": 99.0
+  },
+  {
+    "timestamp": "2026-04-24T22:33:36.430399",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 74.73,
+    "std": 13.72,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-25T17:48:33.488037",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 74.73,
+    "std": 13.72,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-25T19:00:38.018963",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 76.73,
+    "std": 11.37,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-25T19:01:22.982483",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 76.73,
+    "std": 11.37,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-25T19:04:03.595284",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 76.73,
+    "std": 11.37,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-25T19:04:09.240710",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 76.73,
+    "std": 11.37,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  },
+  {
+    "timestamp": "2026-04-25T19:04:49.437440",
+    "subject": "Data Structures",
+    "n_students": 3,
+    "mean": 81.33,
+    "std": 17.59,
+    "topper_name": "Arnav",
+    "topper_marks": 98.0
+  },
+  {
+    "timestamp": "2026-04-25T19:05:10.251899",
+    "subject": "Computer Engineering",
+    "n_students": 15,
+    "mean": 76.73,
+    "std": 11.37,
+    "topper_name": "Rohit Verma",
+    "topper_marks": 95.0
+  }
+]
