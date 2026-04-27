@@ -49,25 +49,220 @@ function gauss(x: number, mu: number, sig: number) {
 }
 
 // ── DEMO DATASET ──────────────────────────────────────────────────────────────
+// ── MULTI-SUBJECT DEMO DATASET ─────────────────────────────────────────────────
+const SUBJECTS = ["Python", "Data Structures", "Mathematics", "Computer Networks", "DBMS", "OS"];
+
+// Type definition for students
+type StudentData = { name: string; avatar: string; subjects: Record<string, { marks: number; history: number[] }> };
+
+// Helper to generate varied, non-monotonic history
+function generateVariedHistory(finalMark: number, pattern: "improving" | "declining" | "volatile" | "stable"): number[] {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  if (pattern === "improving") {
+    const start = clamp(finalMark - 15 - Math.random() * 10);
+    return [start, clamp(start + (finalMark-start)*0.2 + (Math.random()-0.5)*8),
+            clamp(start + (finalMark-start)*0.45 + (Math.random()-0.5)*10),
+            clamp(start + (finalMark-start)*0.72 + (Math.random()-0.5)*7), finalMark];
+  } else if (pattern === "declining") {
+    const start = clamp(finalMark + 15 + Math.random() * 10);
+    return [start, clamp(start - (start-finalMark)*0.2 + (Math.random()-0.5)*8),
+            clamp(start - (start-finalMark)*0.45 + (Math.random()-0.5)*10),
+            clamp(start - (start-finalMark)*0.72 + (Math.random()-0.5)*7), finalMark];
+  } else if (pattern === "volatile") {
+    const swing = () => (Math.random() - 0.5) * 22;
+    return [clamp(finalMark+swing()), clamp(finalMark+swing()), clamp(finalMark+swing()), clamp(finalMark+swing()), finalMark];
+  } else {
+    const drift = () => (Math.random() - 0.5) * 6;
+    return [clamp(finalMark+drift()), clamp(finalMark+drift()), clamp(finalMark+drift()), clamp(finalMark+drift()), finalMark];
+  }
+}
+
+let DEMO_STUDENTS: StudentData[] = [
+  {
+    name: "Aarav Shah", avatar: "AS",
+    subjects: {
+      "Python":            { marks: 88, history: [70, 80, 74, 85, 88] },
+      "Data Structures":   { marks: 76, history: [82, 74, 79, 71, 76] },
+      "Mathematics":       { marks: 91, history: [78, 88, 83, 94, 91] },
+      "Computer Networks": { marks: 65, history: [72, 60, 68, 58, 65] },
+      "DBMS":              { marks: 80, history: [65, 75, 68, 82, 80] },
+      "OS":                { marks: 74, history: [80, 71, 77, 69, 74] },
+    },
+  },
+  {
+    name: "Priya Nair", avatar: "PN",
+    subjects: {
+      "Python":            { marks: 72, history: [65, 78, 60, 75, 72] },
+      "Data Structures":   { marks: 85, history: [70, 80, 75, 88, 85] },
+      "Mathematics":       { marks: 60, history: [68, 55, 72, 58, 60] },
+      "Computer Networks": { marks: 79, history: [64, 74, 70, 82, 79] },
+      "DBMS":              { marks: 88, history: [75, 85, 78, 90, 88] },
+      "OS":                { marks: 66, history: [72, 62, 70, 60, 66] },
+    },
+  },
+  {
+    name: "Rohit Verma", avatar: "RV",
+    subjects: {
+      "Python":            { marks: 95, history: [88, 94, 90, 97, 95] },
+      "Data Structures":   { marks: 92, history: [85, 95, 88, 94, 92] },
+      "Mathematics":       { marks: 88, history: [92, 84, 90, 86, 88] },
+      "Computer Networks": { marks: 90, history: [82, 93, 87, 95, 90] },
+      "DBMS":              { marks: 78, history: [85, 72, 80, 74, 78] },
+      "OS":                { marks: 85, history: [78, 88, 82, 90, 85] },
+    },
+  },
+  {
+    name: "Ishita Rao", avatar: "IR",
+    subjects: {
+      "Python":            { marks: 67, history: [74, 62, 70, 60, 67] },
+      "Data Structures":   { marks: 55, history: [60, 48, 58, 50, 55] },
+      "Mathematics":       { marks: 82, history: [68, 78, 72, 86, 82] },
+      "Computer Networks": { marks: 48, history: [55, 42, 52, 44, 48] },
+      "DBMS":              { marks: 71, history: [62, 75, 66, 78, 71] },
+      "OS":                { marks: 59, history: [65, 54, 62, 52, 59] },
+    },
+  },
+  {
+    name: "Karan Mehta", avatar: "KM",
+    subjects: {
+      "Python":            { marks: 78, history: [60, 72, 65, 80, 78] },
+      "Data Structures":   { marks: 74, history: [80, 68, 76, 70, 74] },
+      "Mathematics":       { marks: 55, history: [62, 48, 58, 50, 55] },
+      "Computer Networks": { marks: 83, history: [72, 86, 78, 88, 83] },
+      "DBMS":              { marks: 69, history: [75, 62, 72, 65, 69] },
+      "OS":                { marks: 77, history: [68, 80, 73, 82, 77] },
+    },
+  },
+  {
+    name: "Neha Joshi", avatar: "NJ",
+    subjects: {
+      "Python":            { marks: 61, history: [68, 55, 65, 58, 61] },
+      "Data Structures":   { marks: 58, history: [52, 64, 56, 62, 58] },
+      "Mathematics":       { marks: 70, history: [62, 75, 66, 78, 70] },
+      "Computer Networks": { marks: 52, history: [58, 46, 55, 48, 52] },
+      "DBMS":              { marks: 64, history: [70, 58, 68, 60, 64] },
+      "OS":                { marks: 48, history: [54, 42, 50, 44, 48] },
+    },
+  },
+  {
+    name: "Vivek Singh", avatar: "VS",
+    subjects: {
+      "Python":            { marks: 85, history: [62, 74, 68, 80, 85] },
+      "Data Structures":   { marks: 88, history: [65, 78, 72, 85, 88] },
+      "Mathematics":       { marks: 72, history: [78, 65, 74, 68, 72] },
+      "Computer Networks": { marks: 79, history: [68, 75, 72, 82, 79] },
+      "DBMS":              { marks: 84, history: [70, 80, 74, 88, 84] },
+      "OS":                { marks: 91, history: [75, 85, 80, 95, 91] },
+    },
+  },
+  {
+    name: "Ananya Desai", avatar: "AD",
+    subjects: {
+      "Python":            { marks: 90, history: [85, 92, 88, 94, 90] },
+      "Data Structures":   { marks: 86, history: [92, 80, 88, 84, 86] },
+      "Mathematics":       { marks: 94, history: [88, 96, 91, 97, 94] },
+      "Computer Networks": { marks: 81, history: [86, 76, 83, 78, 81] },
+      "DBMS":              { marks: 92, history: [85, 95, 88, 96, 92] },
+      "OS":                { marks: 88, history: [92, 84, 90, 86, 88] },
+    },
+  },
+  {
+    name: "Arjun Reddy", avatar: "AR",
+    subjects: {
+      "Python":            { marks: 58, history: [65, 52, 62, 55, 58] },
+      "Data Structures":   { marks: 45, history: [52, 40, 50, 42, 45] },
+      "Mathematics":       { marks: 38, history: [44, 32, 42, 36, 38] },
+      "Computer Networks": { marks: 62, history: [55, 68, 60, 65, 62] },
+      "DBMS":              { marks: 50, history: [56, 44, 54, 48, 50] },
+      "OS":                { marks: 41, history: [48, 36, 44, 38, 41] },
+    },
+  },
+  {
+    name: "Sneha Kapoor", avatar: "SK",
+    subjects: {
+      "Python":            { marks: 74, history: [80, 68, 76, 70, 74] },
+      "Data Structures":   { marks: 79, history: [72, 84, 76, 82, 79] },
+      "Mathematics":       { marks: 68, history: [74, 62, 70, 65, 68] },
+      "Computer Networks": { marks: 76, history: [70, 80, 74, 82, 76] },
+      "DBMS":              { marks: 83, history: [76, 88, 80, 86, 83] },
+      "OS":                { marks: 71, history: [76, 65, 74, 68, 71] },
+    },
+  },
+  {
+    name: "Dev Patel", avatar: "DP",
+    subjects: {
+      "Python":            { marks: 82, history: [88, 76, 84, 80, 82] },
+      "Data Structures":   { marks: 87, history: [80, 90, 84, 92, 87] },
+      "Mathematics":       { marks: 76, history: [82, 70, 78, 74, 76] },
+      "Computer Networks": { marks: 84, history: [77, 88, 81, 90, 84] },
+      "DBMS":              { marks: 79, history: [84, 74, 80, 76, 79] },
+      "OS":                { marks: 88, history: [81, 92, 85, 94, 88] },
+    },
+  },
+  {
+    name: "Manav Sharma", avatar: "MS",
+    subjects: {
+      "Python":            { marks: 69, history: [50, 75, 58, 80, 69] },
+      "Data Structures":   { marks: 63, history: [40, 68, 52, 72, 63] },
+      "Mathematics":       { marks: 78, history: [55, 82, 64, 86, 78] },
+      "Computer Networks": { marks: 54, history: [35, 62, 44, 66, 54] },
+      "DBMS":              { marks: 72, history: [48, 76, 58, 80, 72] },
+      "OS":                { marks: 61, history: [42, 68, 50, 72, 61] },
+    },
+  },
+  {
+    name: "Pooja Iyer", avatar: "PI",
+    subjects: {
+      "Python":            { marks: 77, history: [83, 70, 79, 73, 77] },
+      "Data Structures":   { marks: 81, history: [74, 86, 78, 84, 81] },
+      "Mathematics":       { marks: 85, history: [78, 90, 82, 88, 85] },
+      "Computer Networks": { marks: 73, history: [79, 67, 75, 70, 73] },
+      "DBMS":              { marks: 88, history: [80, 93, 84, 91, 88] },
+      "OS":                { marks: 76, history: [82, 70, 78, 73, 76] },
+    },
+  },
+  {
+    name: "Riya Malhotra", avatar: "RM",
+    subjects: {
+      "Python":            { marks: 63, history: [40, 58, 48, 70, 63] },
+      "Data Structures":   { marks: 57, history: [35, 52, 43, 63, 57] },
+      "Mathematics":       { marks: 49, history: [30, 44, 38, 55, 49] },
+      "Computer Networks": { marks: 71, history: [48, 66, 58, 76, 71] },
+      "DBMS":              { marks: 66, history: [44, 62, 52, 72, 66] },
+      "OS":                { marks: 54, history: [32, 50, 42, 60, 54] },
+    },
+  },
+  {
+    name: "Yash Bansal", avatar: "YB",
+    subjects: {
+      "Python":            { marks: 92, history: [89, 95, 88, 96, 92] },
+      "Data Structures":   { marks: 89, history: [94, 84, 91, 87, 89] },
+      "Mathematics":       { marks: 95, history: [91, 98, 93, 97, 95] },
+      "Computer Networks": { marks: 86, history: [92, 80, 88, 84, 86] },
+      "DBMS":              { marks: 91, history: [87, 95, 89, 96, 91] },
+      "OS":                { marks: 93, history: [89, 97, 91, 95, 93] },
+    },
+  },
+];
+
+// Compute per-subject medians for baseline comparison
+const SUBJECT_MEDIANS: Record<string, number> = {};
+SUBJECTS.forEach(sub => {
+  const allMarks = DEMO_STUDENTS.map(s => s.subjects[sub].marks).sort((a, b) => a - b);
+  const n = allMarks.length;
+  SUBJECT_MEDIANS[sub] = n % 2 === 0
+    ? (allMarks[n/2-1] + allMarks[n/2]) / 2
+    : allMarks[Math.floor(n/2)];
+});
+
+// Legacy DEMO_RAW for the existing analyze flow
 const DEMO_RAW = {
   subject: "Computer Engineering",
-  students: [
-    { name: "Aarav Shah",     marks: 88, history: [70, 75, 80, 84, 88] },
-    { name: "Priya Nair",     marks: 72, history: [78, 76, 74, 73, 72] },
-    { name: "Rohit Verma",    marks: 95, history: [88, 90, 92, 94, 95] },
-    { name: "Ishita Rao",     marks: 67, history: [65, 68, 66, 69, 67] },
-    { name: "Karan Mehta",    marks: 78, history: [60, 68, 72, 75, 78] },
-    { name: "Neha Joshi",     marks: 61, history: [58, 60, 62, 63, 61] },
-    { name: "Vivek Singh",    marks: 85, history: [62, 68, 73, 79, 85] },
-    { name: "Ananya Desai",   marks: 90, history: [85, 87, 88, 89, 90] },
-    { name: "Arjun Reddy",    marks: 58, history: [65, 62, 60, 59, 58] },
-    { name: "Sneha Kapoor",   marks: 74, history: [72, 73, 74, 75, 74] },
-    { name: "Dev Patel",      marks: 82, history: [78, 80, 81, 82, 82] },
-    { name: "Manav Sharma",   marks: 69, history: [50, 75, 60, 80, 69] },
-    { name: "Pooja Iyer",     marks: 77, history: [70, 73, 75, 76, 77] },
-    { name: "Riya Malhotra",  marks: 63, history: [40, 45, 50, 55, 63] },
-    { name: "Yash Bansal",    marks: 92, history: [89, 90, 91, 92, 92] },
-  ],
+  students: DEMO_STUDENTS.map(s => ({
+    name: s.name,
+    marks: s.subjects["Python"].marks,
+    history: s.subjects["Python"].history,
+  })),
 };
 
 // ── CLIENT-SIDE GRADING & STATS ───────────────────────────────────────────────
@@ -1208,6 +1403,704 @@ function ModeToggle({ mode, onToggle, theme }: { mode: string; onToggle: (m: str
   );
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  STUDENT PROFILES TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function SubjectHistoryChart({ name, subject, history, color, theme }: {
+  name: string; subject: string; history: number[]; color: string; theme: any;
+}) {
+  const T = theme;
+  const W = 520, H = 180, PAD = { t: 20, r: 20, b: 36, l: 42 };
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+  const minV = Math.max(0, Math.min(...history) - 8);
+  const maxV = Math.min(100, Math.max(...history) + 8);
+  const rng  = maxV - minV || 1;
+  const toX  = (i: number) => PAD.l + (i / (history.length - 1)) * innerW;
+  const toY  = (v: number) => PAD.t + innerH - ((v - minV) / rng) * innerH;
+  const pts  = history.map((v, i) => `${toX(i)},${toY(v)}`).join(" ");
+  const fillPts = [
+    `${toX(0)},${PAD.t + innerH}`,
+    ...history.map((v, i) => `${toX(i)},${toY(v)}`),
+    `${toX(history.length - 1)},${PAD.t + innerH}`,
+  ].join(" ");
+  const tests = ["T1","T2","T3","T4","T5"];
+  const avg = +(history.reduce((a,b) => a+b, 0) / history.length).toFixed(1);
+  const delta = history[history.length-1] - history[0];
+
+  return (
+    <div style={{
+      background: T.cardBg, border: `1px solid ${T.border}`,
+      borderRadius: 12, padding: "20px 24px",
+    }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:700, color:T.text }}>{subject}</div>
+          <div style={{ fontSize:9, color:T.mutedText, marginTop:2, letterSpacing:"0.1em" }}>
+            {name} · score history
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:16, alignItems:"center" }}>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:8, color:T.mutedText, letterSpacing:"0.12em", textTransform:"uppercase" }}>avg</div>
+            <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{avg}</div>
+          </div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:8, color:T.mutedText, letterSpacing:"0.12em", textTransform:"uppercase" }}>trend</div>
+            <div style={{ fontSize:13, fontWeight:700, color: delta >= 0 ? "#16A34A" : "#DC2626" }}>
+              {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}
+            </div>
+          </div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:8, color:T.mutedText, letterSpacing:"0.12em", textTransform:"uppercase" }}>latest</div>
+            <div style={{ fontSize:14, fontWeight:700, color }}>{history[history.length-1]}</div>
+          </div>
+        </div>
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", height:"auto" }}>
+        {/* Y-grid */}
+        {[0,25,50,75,100].filter(v => v >= minV-5 && v <= maxV+5).map(v => (
+          <g key={v}>
+            <line x1={PAD.l} y1={toY(v)} x2={W-PAD.r} y2={toY(v)}
+              stroke={T.border} strokeWidth="0.5" strokeDasharray="3 5"/>
+            <text x={PAD.l-6} y={toY(v)+3.5} fill={T.mutedText} fontSize="8"
+              textAnchor="end" fontFamily="'JetBrains Mono', monospace">{v}</text>
+          </g>
+        ))}
+        {/* Fill area */}
+        <polygon points={fillPts} fill={color} opacity="0.08"/>
+        {/* Line */}
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Points */}
+        {history.map((v, i) => (
+          <g key={i}>
+            <circle cx={toX(i)} cy={toY(v)} r="4" fill={color} opacity="0.9"/>
+            <text x={toX(i)} y={toY(v)-8} fill={color} fontSize="9"
+              textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontWeight="600">{v}</text>
+            <text x={toX(i)} y={H-6} fill={T.mutedText} fontSize="8"
+              textAnchor="middle" fontFamily="'JetBrains Mono', monospace">{tests[i]}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function StudentSubjectBars({ student, theme, onSelectSubject }: {
+  student: StudentData; theme: any; onSelectSubject: (sub: string) => void;
+}) {
+  const T = theme;
+  const W = 640, H = 220, PAD = { t: 20, r: 20, b: 44, l: 42 };
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+  const barCount = SUBJECTS.length;
+  const barW = Math.floor(innerW / barCount) - 10;
+  const toX = (i: number) => PAD.l + i * (innerW / barCount) + (innerW / barCount) / 2;
+  const toY = (v: number) => PAD.t + innerH - (v / 100) * innerH;
+  const [hoveredBar, setHoveredBar] = useState<string | null>(null);
+
+  return (
+    <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius:12, padding:"20px 24px" }}>
+      <div style={{ fontSize:11, color:T.mutedText, marginBottom:14, letterSpacing:"0.1em" }}>
+        click any bar to see test history →
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", height:"auto", cursor:"pointer" }}>
+        {/* Y grid */}
+        {[0,25,50,75,100].map(v => (
+          <g key={v}>
+            <line x1={PAD.l} y1={toY(v)} x2={W-PAD.r} y2={toY(v)}
+              stroke={T.border} strokeWidth="0.5" strokeDasharray="3 5"/>
+            <text x={PAD.l-6} y={toY(v)+3.5} fill={T.mutedText} fontSize="8"
+              textAnchor="end" fontFamily="'JetBrains Mono', monospace">{v}</text>
+          </g>
+        ))}
+        {/* Median baseline */}
+        {SUBJECTS.map((sub, i) => {
+          const med = SUBJECT_MEDIANS[sub];
+          return (
+            <line key={`med-${i}`}
+              x1={toX(i) - barW/2 - 4} y1={toY(med)}
+              x2={toX(i) + barW/2 + 4} y2={toY(med)}
+              stroke="#0EA5E9" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.7"/>
+          );
+        })}
+        {/* Bars */}
+        {SUBJECTS.map((sub, i) => {
+          const marks = student.subjects[sub].marks;
+          const isHov = hoveredBar === sub;
+          const color = marks >= 85 ? "#F59E0B"
+                      : marks >= 75 ? "#0284C7"
+                      : marks >= 60 ? "#16A34A"
+                      : marks >= 40 ? "#6B7280"
+                      : "#DC2626";
+          return (
+            <g key={sub}
+              onMouseEnter={() => setHoveredBar(sub)}
+              onMouseLeave={() => setHoveredBar(null)}
+              onClick={() => onSelectSubject(sub)}
+              style={{ cursor:"pointer" }}
+            >
+              <rect
+                x={toX(i) - barW/2} y={toY(marks)}
+                width={barW} height={toY(0) - toY(marks)}
+                fill={color} opacity={isHov ? 0.9 : 0.6} rx="3"
+                style={{ transition:"all 0.15s" }}
+              />
+              {isHov && (
+                <rect x={toX(i) - barW/2 - 2} y={toY(marks) - 2}
+                  width={barW+4} height={toY(0) - toY(marks) + 2}
+                  fill="none" stroke={color} strokeWidth="1.5" rx="4" opacity="0.8"/>
+              )}
+              <text x={toX(i)} y={toY(marks) - 6} fill={color} fontSize="10"
+                textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontWeight="700">{marks}</text>
+              {/* Median dot */}
+              <circle cx={toX(i)} cy={toY(SUBJECT_MEDIANS[sub])} r="3"
+                fill="#0EA5E9" opacity="0.8"/>
+              {/* Subject label */}
+              <text x={toX(i)} y={H - PAD.b + 14} fill={isHov ? T.text : T.mutedText} fontSize="8"
+                textAnchor="middle" fontFamily="'JetBrains Mono', monospace"
+                style={{ transition:"fill 0.15s" }}>
+                {sub.length > 8 ? sub.slice(0,8)+"…" : sub}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      {/* Legend */}
+      <div style={{ display:"flex", alignItems:"center", gap:16, marginTop:8, fontSize:9, color:T.mutedText, fontFamily:"'JetBrains Mono', monospace" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+          <svg width="20" height="4"><line x1="0" y1="2" x2="20" y2="2" stroke="#0EA5E9" strokeWidth="1.5" strokeDasharray="3 3"/></svg>
+          class median
+        </div>
+        <div>· bars = student marks · click bar for test history</div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ADD STUDENT MODAL  (2-step: basic info → optional history)
+// ═══════════════════════════════════════════════════════════════════════════════
+function AddStudentModal({ onClose, onAdd, theme }: { onClose: () => void; onAdd: (s: StudentData) => void; theme: any }) {
+  const T = theme;
+  const [visible, setVisible] = useState(false);
+  // step 1: "info" | step 2a: "history-yes" | step 2b: "history-no" (confirm & add)
+  const [step, setStep] = useState<"info" | "history">("info");
+  const [hasHistory, setHasHistory] = useState<boolean | null>(null);
+
+  const [name, setName] = useState("");
+  const [marks, setMarks] = useState<Record<string, string>>(
+    () => Object.fromEntries(SUBJECTS.map(s => [s, ""]))
+  );
+  // history[sub] = ["", "", "", ""]  (T1–T4; T5 = current marks)
+  const [history, setHistory] = useState<Record<string, string[]>>(
+    () => Object.fromEntries(SUBJECTS.map(s => [s, ["", "", "", ""]]))
+  );
+  const [error, setError] = useState("");
+
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)); }, []);
+  const handleClose = () => { setVisible(false); setTimeout(onClose, 260); };
+
+  const inputStyle: React.CSSProperties = {
+    background: T.statBg, border: `1px solid ${T.border}`,
+    borderRadius: 6, padding: "7px 10px", color: T.text, width: "100%",
+    fontFamily: "'JetBrains Mono', monospace", fontSize: 12, outline: "none",
+    boxSizing: "border-box",
+  };
+
+  // ── Step 1 validation → move to step 2
+  const handleStep1Next = (withHistory: boolean) => {
+    if (!name.trim()) { setError("Name is required"); return; }
+    for (const sub of SUBJECTS) {
+      const v = parseInt(marks[sub]);
+      if (isNaN(v) || v < 0 || v > 100) { setError(`${sub}: current marks must be 0–100`); return; }
+    }
+    setError("");
+    setHasHistory(withHistory);
+    if (withHistory) { setStep("history"); }
+    else { buildAndAdd(false); }
+  };
+
+  // Step 2 submit — empty fields are simply skipped
+  const handleStep2Submit = () => {
+    for (const sub of SUBJECTS) {
+      for (let t = 0; t < 4; t++) {
+        const raw = history[sub][t].trim();
+        if (raw === "") continue;
+        const v = parseInt(raw);
+        if (isNaN(v) || v < 0 || v > 100) { setError(`${sub} T${t+1}: must be 0-100`); return; }
+      }
+    }
+    setError("");
+    buildAndAdd(true);
+  };
+
+  const buildAndAdd = (useHistory: boolean) => {
+    const initials = name.trim().split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+    const subjectData: Record<string, { marks: number; history: number[] }> = {};
+    SUBJECTS.forEach(sub => {
+      const m = parseInt(marks[sub]);
+      let hist: number[];
+      if (useHistory) {
+        const filled = history[sub].map(v => v.trim()).filter(v => v !== "").map(v => parseInt(v));
+        hist = [...filled, m];
+      } else {
+        hist = [m];
+      }
+      subjectData[sub] = { marks: m, history: hist };
+    });
+    onAdd({ name: name.trim(), avatar: initials, subjects: subjectData });
+    handleClose();
+  };
+
+  return (
+    <div onClick={handleClose} style={{
+      position: "fixed", inset: 0, zIndex: 300,
+      background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      opacity: visible ? 1 : 0, transition: "opacity 0.25s",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: 14,
+        padding: "28px 32px", width: "90%", maxWidth: 520,
+        maxHeight: "88vh", overflowY: "auto",
+        fontFamily: "'JetBrains Mono', monospace", color: T.text,
+        transform: visible ? "scale(1)" : "scale(0.95)",
+        transition: "transform 0.26s cubic-bezier(0.34,1.2,0.64,1)",
+        boxShadow: "0 24px 80px rgba(0,0,0,0.25)",
+      }}>
+
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>
+              {step === "info" ? "Add Student" : "Test History"}
+            </div>
+            <div style={{ fontSize: 9, color: T.mutedText, marginTop: 3 }}>
+              {step === "info" ? "step 1 of 2 — basic info" : "step 2 of 2 — past test scores (T1–T4)"}
+            </div>
+          </div>
+          <button onClick={handleClose} style={{ background: "none", border: "none", cursor: "pointer", color: T.subtext, fontSize: 22 }}>×</button>
+        </div>
+
+        {/* ── STEP 1: Name + current marks ── */}
+        {step === "info" && (<>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 9, color: T.mutedText, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>Full Name</div>
+            <input value={name} onChange={e => { setName(e.target.value); setError(""); }}
+              placeholder="e.g. Rahul Gupta" style={inputStyle} />
+          </div>
+
+          <div style={{ fontSize: 9, color: T.mutedText, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 10 }}>
+            Current Marks (0–100)
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+            {SUBJECTS.map(sub => (
+              <div key={sub}>
+                <div style={{ fontSize: 9, color: T.subtext, marginBottom: 4 }}>{sub}</div>
+                <input type="number" min="0" max="100" placeholder="—"
+                  value={marks[sub]}
+                  onChange={e => { setMarks(p => ({ ...p, [sub]: e.target.value })); setError(""); }}
+                  style={inputStyle} />
+              </div>
+            ))}
+          </div>
+
+          {error && <div style={{ fontSize: 10, color: "#DC2626", marginBottom: 12 }}>{error}</div>}
+
+          {/* History question */}
+          <div style={{
+            background: T.statBg, border: `1px solid ${T.border}`,
+            borderRadius: 8, padding: "14px 16px", marginBottom: 16,
+          }}>
+            <div style={{ fontSize: 10, color: T.text, fontWeight: 600, marginBottom: 4 }}>
+              Do you have previous test scores for this student?
+            </div>
+            <div style={{ fontSize: 9, color: T.mutedText }}>
+              If yes, you can enter T1–T4 scores on the next step. If no, only the current mark will be recorded.
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={handleClose} style={{
+              flex: 1, background: "none", border: `1px solid ${T.border}`,
+              borderRadius: 6, color: T.subtext, padding: "9px", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+            }}>cancel</button>
+            <button onClick={() => handleStep1Next(false)} style={{
+              flex: 1.2, background: "none", border: `1px solid ${T.border}`,
+              borderRadius: 6, color: T.subtext, padding: "9px", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+              transition: "all 0.15s",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = T.subtext; e.currentTarget.style.color = T.text; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.subtext; }}
+            >no history → add</button>
+            <button onClick={() => handleStep1Next(true)} style={{
+              flex: 1.5, background: T === THEMES.dark ? "#E8EFF7" : "#1A1A1A",
+              border: "none", borderRadius: 6,
+              color: T === THEMES.dark ? "#0B0F14" : "#F5EFE6",
+              padding: "9px", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+            }}>yes, enter history →</button>
+          </div>
+        </>)}
+
+        {/* ── STEP 2: T1–T4 history per subject ── */}
+        {step === "history" && (<>
+          <div style={{ fontSize: 9, color: T.mutedText, marginBottom: 14 }}>
+            Fill in whichever past test scores you have — empty fields will be skipped. T5 (current) is already set.
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+            {SUBJECTS.map(sub => (
+              <div key={sub} style={{
+                background: T.statBg, border: `1px solid ${T.border}`,
+                borderRadius: 8, padding: "12px 14px",
+              }}>
+                <div style={{ fontSize: 10, color: T.text, fontWeight: 600, marginBottom: 10 }}>{sub}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6 }}>
+                  {["T1","T2","T3","T4"].map((label, idx) => (
+                    <div key={label}>
+                      <div style={{ fontSize: 8, color: T.mutedText, marginBottom: 4, textAlign: "center" }}>{label}</div>
+                      <input type="number" min="0" max="100" placeholder="—"
+                        value={history[sub][idx]}
+                        onChange={e => {
+                          setError("");
+                          setHistory(prev => {
+                            const updated = [...prev[sub]];
+                            updated[idx] = e.target.value;
+                            return { ...prev, [sub]: updated };
+                          });
+                        }}
+                        style={{ ...inputStyle, textAlign: "center", padding: "6px 4px" }}
+                      />
+                    </div>
+                  ))}
+                  <div>
+                    <div style={{ fontSize: 8, color: T.mutedText, marginBottom: 4, textAlign: "center" }}>T5 (now)</div>
+                    <div style={{
+                      ...inputStyle, textAlign: "center", padding: "6px 4px",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: T.mutedText, borderStyle: "dashed", cursor: "default",
+                    }}>{marks[sub]}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {error && <div style={{ fontSize: 10, color: "#DC2626", marginBottom: 12 }}>{error}</div>}
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => { setStep("info"); setError(""); }} style={{
+              flex: 1, background: "none", border: `1px solid ${T.border}`,
+              borderRadius: 6, color: T.subtext, padding: "9px", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+            }}>← back</button>
+            <button onClick={handleStep2Submit} style={{
+              flex: 2, background: T === THEMES.dark ? "#E8EFF7" : "#1A1A1A",
+              border: "none", borderRadius: 6,
+              color: T === THEMES.dark ? "#0B0F14" : "#F5EFE6",
+              padding: "9px", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+            }}>add student →</button>
+          </div>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+function StudentProfilesTab({ theme }: { theme: any }) {
+  const T = theme;
+  const [students, setStudents] = useState<StudentData[]>(DEMO_STUDENTS);
+  const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const handleAddStudent = (s: StudentData) => {
+    DEMO_STUDENTS = [...DEMO_STUDENTS, s];
+    setStudents(prev => [...prev, s]);
+  };
+
+  const overallAvg = (s: StudentData) => {
+    const vals = SUBJECTS.map(sub => s.subjects[sub].marks);
+    return +(vals.reduce((a,b) => a+b,0) / vals.length).toFixed(1);
+  };
+
+  const getBestSubject = (s: StudentData) =>
+    SUBJECTS.reduce((best, sub) => s.subjects[sub].marks > s.subjects[best].marks ? sub : best, SUBJECTS[0]);
+
+  const getWeakSubject = (s: StudentData) =>
+    SUBJECTS.reduce((weak, sub) => s.subjects[sub].marks < s.subjects[weak].marks ? sub : weak, SUBJECTS[0]);
+
+  if (showAddModal) {
+    return (
+      <div>
+        <AddStudentModal onClose={() => setShowAddModal(false)} onAdd={handleAddStudent} theme={T} />
+        <StudentListView students={students} overallAvg={overallAvg} getBestSubject={getBestSubject} getWeakSubject={getWeakSubject} onSelect={setSelectedStudent} onAddClick={() => setShowAddModal(true)} theme={T} />
+      </div>
+    );
+  }
+
+  if (selectedStudent && selectedSubject) {
+    const subData = selectedStudent.subjects[selectedSubject];
+    const color = subData.marks >= 85 ? "#F59E0B"
+                : subData.marks >= 75 ? "#0284C7"
+                : subData.marks >= 60 ? "#16A34A"
+                : subData.marks >= 40 ? "#6B7280"
+                : "#DC2626";
+    return (
+      <div style={{ animation:"fadeUp 0.3s ease" }}>
+        {/* Breadcrumb */}
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:24, fontSize:11, fontFamily:"'JetBrains Mono', monospace" }}>
+          <button onClick={() => { setSelectedStudent(null); setSelectedSubject(null); }}
+            style={{ background:"none", border:"none", cursor:"pointer", color:T.mutedText, padding:0 }}
+            onMouseEnter={e => (e.currentTarget.style.color = T.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = T.mutedText)}>
+            profiles
+          </button>
+          <span style={{ color:T.border }}>›</span>
+          <button onClick={() => setSelectedSubject(null)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:T.mutedText, padding:0 }}
+            onMouseEnter={e => (e.currentTarget.style.color = T.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = T.mutedText)}>
+            {selectedStudent.name}
+          </button>
+          <span style={{ color:T.border }}>›</span>
+          <span style={{ color:T.text, fontWeight:600 }}>{selectedSubject}</span>
+        </div>
+
+        <SubjectHistoryChart
+          name={selectedStudent.name}
+          subject={selectedSubject}
+          history={subData.history}
+          color={color}
+          theme={T}
+        />
+
+        {/* Quick-switch other subjects */}
+        <div style={{ marginTop:20 }}>
+          <div style={{ fontSize:9, color:T.mutedText, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:12, fontFamily:"'JetBrains Mono', monospace" }}>
+            switch subject
+          </div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            {SUBJECTS.map(sub => {
+              const m = selectedStudent.subjects[sub].marks;
+              const isActive = sub === selectedSubject;
+              return (
+                <button key={sub} onClick={() => setSelectedSubject(sub)} style={{
+                  background: isActive ? T.tag : "transparent",
+                  border: `1px solid ${isActive ? T.subtext : T.border}`,
+                  borderRadius:6, padding:"6px 14px", cursor:"pointer",
+                  fontFamily:"'JetBrains Mono', monospace", fontSize:11,
+                  color: isActive ? T.text : T.subtext,
+                  transition:"all 0.15s",
+                }}>
+                  {sub} <span style={{ color: isActive ? T.text : T.mutedText, fontWeight:700 }}>{m}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedStudent) {
+    const avg = overallAvg(selectedStudent);
+    const best = getBestSubject(selectedStudent);
+    const weak = getWeakSubject(selectedStudent);
+    const initials = selectedStudent.avatar;
+    return (
+      <div style={{ animation:"fadeUp 0.3s ease" }}>
+        {/* Breadcrumb */}
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:24, fontSize:11, fontFamily:"'JetBrains Mono', monospace" }}>
+          <button onClick={() => setSelectedStudent(null)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:T.mutedText, padding:0 }}
+            onMouseEnter={e => (e.currentTarget.style.color = T.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = T.mutedText)}>
+            profiles
+          </button>
+          <span style={{ color:T.border }}>›</span>
+          <span style={{ color:T.text, fontWeight:600 }}>{selectedStudent.name}</span>
+        </div>
+
+        {/* Student header card */}
+        <div style={{
+          background: T.cardBg, border:`1px solid ${T.border}`,
+          borderRadius:12, padding:"20px 24px", marginBottom:20,
+          display:"flex", alignItems:"center", gap:20,
+        }}>
+          <div style={{
+            width:52, height:52, borderRadius:"50%",
+            background: T === THEMES.dark ? "#1E2D3D" : "#EDE4D3",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:14, fontWeight:700, color:T.text, flexShrink:0,
+            fontFamily:"'JetBrains Mono', monospace",
+          }}>{initials}</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:16, fontWeight:700, color:T.text, marginBottom:4 }}>{selectedStudent.name}</div>
+            <div style={{ display:"flex", gap:20, fontSize:10, color:T.subtext, fontFamily:"'JetBrains Mono', monospace" }}>
+              <span>overall avg <strong style={{ color:T.text }}>{avg}</strong></span>
+              <span>best: <strong style={{ color:"#16A34A" }}>{best}</strong></span>
+              <span>needs work: <strong style={{ color:"#DC2626" }}>{weak}</strong></span>
+            </div>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
+            {[
+              ["avg", avg],
+              ["best", selectedStudent.subjects[best].marks],
+              ["low",  selectedStudent.subjects[weak].marks],
+            ].map(([l, v]) => (
+              <div key={String(l)} style={{
+                background:T.statBg, border:`1px solid ${T.border}`,
+                borderRadius:7, padding:"8px 12px", textAlign:"center",
+                fontFamily:"'JetBrains Mono', monospace",
+              }}>
+                <div style={{ fontSize:8, color:T.mutedText, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:3 }}>{l}</div>
+                <div style={{ fontSize:15, fontWeight:700, color:T.text }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bar chart — click to drill down */}
+        <StudentSubjectBars student={selectedStudent} theme={T} onSelectSubject={(sub) => setSelectedSubject(sub)} />
+
+        {/* Subject cards grid */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginTop:20 }}>
+          {SUBJECTS.map(sub => {
+            const m = selectedStudent.subjects[sub].marks;
+            const med = SUBJECT_MEDIANS[sub];
+            const diff = m - med;
+            const color = m >= 85 ? "#F59E0B" : m >= 75 ? "#0284C7" : m >= 60 ? "#16A34A" : m >= 40 ? "#6B7280" : "#DC2626";
+            return (
+              <div key={sub}
+                onClick={() => setSelectedSubject(sub)}
+                style={{
+                  background:T.statBg, border:`1px solid ${T.border}`,
+                  borderRadius:9, padding:"14px 16px", cursor:"pointer",
+                  transition:"all 0.15s", fontFamily:"'JetBrains Mono', monospace",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color; (e.currentTarget as HTMLElement).style.background = T.tag; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = T.border; (e.currentTarget as HTMLElement).style.background = T.statBg; }}
+              >
+                <div style={{ fontSize:9, color:T.mutedText, marginBottom:6, letterSpacing:"0.1em" }}>{sub}</div>
+                <div style={{ fontSize:20, fontWeight:700, color }}>{m}</div>
+                <div style={{ fontSize:9, marginTop:4, color: diff >= 0 ? "#16A34A" : "#DC2626" }}>
+                  {diff >= 0 ? "+" : ""}{diff.toFixed(1)} vs median
+                </div>
+                <div style={{ fontSize:8, color:T.mutedText, marginTop:8 }}>click for history →</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Student list ──
+  return (
+    <div>
+      <StudentListView students={students} overallAvg={overallAvg} getBestSubject={getBestSubject} getWeakSubject={getWeakSubject} onSelect={setSelectedStudent} onAddClick={() => setShowAddModal(true)} theme={T} />
+    </div>
+  );
+}
+
+function StudentListView({ students, overallAvg, getBestSubject, getWeakSubject, onSelect, onAddClick, theme }: {
+  students: StudentData[];
+  overallAvg: (s: StudentData) => number;
+  getBestSubject: (s: StudentData) => string;
+  getWeakSubject: (s: StudentData) => string;
+  onSelect: (s: StudentData) => void;
+  onAddClick: () => void;
+  theme: any;
+}) {
+  const T = theme;
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Student Profiles</div>
+          <div style={{ fontSize: 10, color: T.mutedText, fontFamily: "'JetBrains Mono', monospace" }}>
+            {students.length} students · click to view multi-subject breakdown
+          </div>
+        </div>
+        <button onClick={onAddClick} style={{
+          background: T === THEMES.dark ? "#E8EFF7" : "#1A1A1A",
+          border: "none", borderRadius: 6,
+          color: T === THEMES.dark ? "#0B0F14" : "#F5EFE6",
+          padding: "8px 16px", cursor: "pointer",
+          fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+          transition: "opacity 0.15s",
+        }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = "0.82")}
+          onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+        >+ add student</button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+        {students.map(s => {
+          const avg = overallAvg(s);
+          const best = getBestSubject(s);
+          const weak = getWeakSubject(s);
+          const rankColor = avg >= 85 ? "#F59E0B" : avg >= 75 ? "#0284C7" : avg >= 60 ? "#16A34A" : avg >= 40 ? "#6B7280" : "#DC2626";
+          return (
+            <div key={s.name}
+              onClick={() => onSelect(s)}
+              style={{
+                background: T.cardBg, border: `1px solid ${T.border}`,
+                borderRadius: 10, padding: "16px", cursor: "pointer",
+                transition: "all 0.15s", fontFamily: "'JetBrains Mono', monospace",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = T.subtext; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = T.border;  (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: T === THEMES.dark ? "#1E2D3D" : "#EDE4D3",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 700, color: T.text, flexShrink: 0,
+                }}>{s.avatar}</div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{s.name}</div>
+                  <div style={{ fontSize: 9, color: T.mutedText, marginTop: 1 }}>{SUBJECTS.length} subjects</div>
+                </div>
+                <div style={{ marginLeft: "auto", fontSize: 18, fontWeight: 700, color: rankColor }}>{avg}</div>
+              </div>
+
+              {/* Mini subject bars */}
+              <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 28, marginBottom: 10 }}>
+                {SUBJECTS.map(sub => {
+                  const m = s.subjects[sub].marks;
+                  const c = m >= 85 ? "#F59E0B" : m >= 75 ? "#0284C7" : m >= 60 ? "#16A34A" : m >= 40 ? "#6B7280" : "#DC2626";
+                  return (
+                    <div key={sub} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                      <div style={{ width: "100%", height: `${(m/100)*24}px`, background: c, borderRadius: "2px 2px 0 0", opacity: 0.7, minHeight: 2 }} />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ fontSize: 9, color: T.mutedText, display: "flex", justifyContent: "space-between" }}>
+                <span>↑ <span style={{ color: "#16A34A" }}>{best.split(" ")[0]}</span></span>
+                <span>↓ <span style={{ color: "#DC2626" }}>{weak.split(" ")[0]}</span></span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function FilterPills({ filter, setFilter, theme }: { filter: string; setFilter: (f: string) => void; theme: any }) {
   const T = theme;
   const options: [string, string, string][] = [
@@ -1244,6 +2137,7 @@ function FilterPills({ filter, setFilter, theme }: { filter: string; setFilter: 
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
   const [isDark,          setIsDark]          = useState(false);
+  const [activeTab,       setActiveTab]       = useState<"analyze"|"profiles">("analyze");
   const [processed,       setProcessed]       = useState<any>(null);
   const [filter,          setFilter]          = useState("all");
   const [mode,            setMode]            = useState("curve");
@@ -1349,18 +2243,32 @@ export default function App() {
         background:T.headerBg,
         transition:"background 0.35s ease, border-color 0.35s ease",
       }}>
-        <div>
-          <div style={{ fontSize:9, letterSpacing:"0.22em", color:T.mutedText, textTransform:"uppercase", marginBottom:2 }}>
-            Grading Intelligence
+        <div style={{ display:"flex", alignItems:"center", gap:28 }}>
+          <div>
+            <div style={{ fontSize:9, letterSpacing:"0.22em", color:T.mutedText, textTransform:"uppercase", marginBottom:2 }}>
+              Grading Intelligence
+            </div>
+            <div style={{ fontSize:15, fontWeight:700, letterSpacing:"-0.02em", color:T.text }}>
+              Bell Curve Analyzer
+            </div>
           </div>
-          <div style={{ fontSize:15, fontWeight:700, letterSpacing:"-0.02em", color:T.text }}>
-            Bell Curve Analyzer
+          {/* Tab switcher */}
+          <div style={{ display:"inline-flex", border:`1px solid ${T.border}`, borderRadius:6, overflow:"hidden" }}>
+            {(["analyze","profiles"] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                background: activeTab === tab ? (T === THEMES.dark ? "#1E2D3D" : "#EDE4D3") : "transparent",
+                border:"none", color: activeTab === tab ? T.text : T.subtext,
+                padding:"6px 16px", cursor:"pointer",
+                fontFamily:"'JetBrains Mono', monospace",
+                fontSize:10, transition:"all 0.18s", letterSpacing:"0.04em",
+              }}>{tab}</button>
+            ))}
           </div>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          {processed && <ModeToggle mode={mode} onToggle={handleModeToggle} theme={T}/>}
+          {activeTab === "analyze" && processed && <ModeToggle mode={mode} onToggle={handleModeToggle} theme={T}/>}
           <ThemeToggle isDark={isDark} onToggle={() => setIsDark(d => !d)} theme={T}/>
-          {processed && (
+          {activeTab === "analyze" && processed && (
             <button onClick={() => { setProcessed(null); setInsightsVisible(false); }} style={{
               background:"none", border:`1px solid ${T.border}`,
               borderRadius:5, color:T.subtext, padding:"5px 13px",
@@ -1378,6 +2286,12 @@ export default function App() {
       <div style={{ maxWidth:960, margin:"0 auto", padding:"40px 24px" }}>
 
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} theme={T}/>}
+
+        {/* ── PROFILES TAB ── */}
+        {activeTab === "profiles" && <StudentProfilesTab theme={T} />}
+
+        {/* ── ANALYZE TAB ── */}
+        {activeTab === "analyze" && <>
 
         {/* Loading */}
         {loading && (
@@ -1478,6 +2392,7 @@ export default function App() {
             })()}
           </div>
         )}
+        </>}
       </div>
     </div>
   );
